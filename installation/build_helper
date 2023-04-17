@@ -296,14 +296,27 @@ check_enable_epel_repos() {
       echo "EPEL repos already present. Good."
     else
       echo "EPEL repos not present. Installing them."
-      wget --tries=4 --retry-connrefused --wait=8 \
-        https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+      idx=0
+      while [[ $idx -lt 4 ]]; do
+        wget --tries=4 --retry-connrefused --wait=8 \
+          --user-agent="Mozilla" \
+          https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+        if [[ $? -ne 0 ]]; then
+          idx=$(($idx+1))
+          sleep 1
+        else
+          idx=10
+        fi
+      done
+      if [[ $idx -eq 4 ]]; then
+        echo "Error: Could not download the EPEL-8 RPM file"
+        exit 1
+      fi
       $SUDO $INSTALLER install $OPTION epel-release-latest-8.noarch.rpm
       rm -f epel-release-latest-8.noarch.rpm
     fi
   fi
 }
-
 
 ################################
 # set_openair_env
