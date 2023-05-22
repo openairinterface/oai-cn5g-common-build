@@ -2,7 +2,6 @@
 #arg1 is force (0 or 1) (no interactive script)
 #arg2 is debug (0 or 1) (install debug libraries)
 install_libyaml_cpp_from_git() {
-  # For Ubuntu 2x and RHEL we should install from repo.
   echo "Starting to install libyaml_cpp"
   if [ $1 -eq 0 ]; then
     read -p "Do you want to install yaml_cpp ? <y/N> " prompt
