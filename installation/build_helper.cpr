@@ -39,16 +39,6 @@ install_cpr_from_git() {
 
   if [[ $prompt =~ [yY](es)* ]]
   then
-   # if [[ $OS_DISTRO == "ubuntu" ]]; then
-   #   PACKAGE_LIST="\
-   #   libcurl4-nss-dev"
-   # elif [[ "$OS_BASEDISTRO" == "fedora" ]]; then
-   #   PACKAGE_LIST="\
-   #   libcurl-devel"
-   # else
-   #   echo_fatal "$OS_DISTRO is not a supported distribution."
-   # fi
-
     echo "Install build tools"
     $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
     ret=$?;[[ $ret -ne 0 ]] && return $ret
@@ -64,14 +54,14 @@ install_cpr_from_git() {
 
     git clone $GIT_URL
     cd cpr
-    git checkout tags/1.9.5
+    git checkout tags/1.10.0
     mkdir build && cd build
-    cmake .. -DCPR_USE_SYSTEM_CURL=ON
+    cmake .. -DCPR_USE_SYSTEM_CURL=ON -DCPR_BUILD_TESTS=OFF
     cmake --build . --parallel
     $SUDO cmake --install .
 
     ret=$?;[[ $ret -ne 0 ]] && popd && return $ret
-    git clean -x -d -ff
+    git clean -x -d -ff .
     popd
   fi
 
