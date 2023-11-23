@@ -29,7 +29,7 @@ install_libyaml_cpp_from_git() {
     fi
 
     git clone $GIT_URL
-    cd yaml-cpp && git checkout master
+    cd yaml-cpp && git checkout 0.8.0
     ret=$?;[[ $ret -ne 0 ]] && popd && return $ret
     mkdir _build && cd _build
     $CMAKE -G "Unix Makefiles" -DYAML_BUILD_SHARED_LIBS=on -DYAML_CPP_BUILD_TESTS=off ..
