@@ -69,7 +69,7 @@ install_mongocxx_from_git() {
     fi
 
     git clone $GIT_URL
-    cd mongo-cxx-driver && git checkout r3.9.0
+    cd mongo-cxx-driver && git checkout r3.8.0
     ret=$?;[[ $ret -ne 0 ]] && popd && return $ret
 
     cd build
