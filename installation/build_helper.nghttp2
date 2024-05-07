@@ -88,7 +88,8 @@ install_nghttp2_from_git() {
 
     git clone $GIT_URL
     cd nghttp2
-    git checkout 43ba3125932c1d56addaeded2b7f62637af255cd
+    # This is the last commit before nghttp2_asio was no longer maintained
+    git checkout 00a33281bec5a6a53fba80df4036d8037957df64
     git submodule update --init
     ret=$?;[[ $ret -ne 0 ]] && popd && return $ret
     autoreconf -i
