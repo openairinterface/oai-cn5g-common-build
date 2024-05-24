@@ -139,9 +139,13 @@ check_supported_distribution() {
         "rhel8.7")     return 0 ;;
         "rhel8.8")     return 0 ;;
         "rhel8.9")     return 0 ;;
+        "rhel8.10")    return 0 ;;
+        "rhel8.11")    return 0 ;;
         "rocky8.7")    return 0 ;;
         "rocky8.8")    return 0 ;;
         "rocky8.9")    return 0 ;;
+        "rocky8.10")   return 0 ;;
+        "rocky8.11")   return 0 ;;
     esac
     return 1
 }
