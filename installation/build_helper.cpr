@@ -39,10 +39,6 @@ install_cpr_from_git() {
 
   if [[ $prompt =~ [yY](es)* ]]
   then
-    #echo "Install build tools"
-    #$SUDO $INSTALLER install $OPTION $PACKAGE_LIST
-    #ret=$?;[[ $ret -ne 0 ]] && return $ret
-
     GIT_URL=https://github.com/libcpr/cpr.git
     echo "Install cpr from $GIT_URL"
     pushd /tmp

@@ -50,6 +50,9 @@ install_mongocxx_from_git() {
       PACKAGE_LIST="\
       mongo-c-driver-devel \
       libbson-devel \
+      utf8proc-devel \
+      openldap-devel \
+      cyrus-sasl-devel \
       python3 \
       $CMAKE"
     else
