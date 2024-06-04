@@ -52,6 +52,33 @@ install_pistache_from_git() {
     git clone $GIT_URL
     cd pistache && git checkout e18ed9baeb2145af6f9ea41246cf48054ffd9907
     ret=$?;[[ $ret -ne 0 ]] && popd && return $ret
+    # patching with missing cstdint header include
+    echo "diff --git a/include/pistache/flags.h b/include/pistache/flags.h" > cstdint.patch
+    echo "index 69ab3cf..c5e05dd 100644" >> cstdint.patch
+    echo "--- a/include/pistache/flags.h" >> cstdint.patch
+    echo "+++ b/include/pistache/flags.h" >> cstdint.patch
+    echo "@@ -8,6 +8,7 @@" >> cstdint.patch
+    echo " " >> cstdint.patch
+    echo " #include <type_traits>" >> cstdint.patch
+    echo " #include <climits>" >> cstdint.patch
+    echo "+#include <cstdint>" >> cstdint.patch
+    echo " #include <iostream>" >> cstdint.patch
+    echo " " >> cstdint.patch
+    echo " namespace Pistache {" >> cstdint.patch
+    echo "diff --git a/include/pistache/optional.h b/include/pistache/optional.h" >> cstdint.patch
+    echo "index 3ffc22c..83d73eb 100644" >> cstdint.patch
+    echo "--- a/include/pistache/optional.h" >> cstdint.patch
+    echo "+++ b/include/pistache/optional.h" >> cstdint.patch
+    echo "@@ -12,6 +12,7 @@" >> cstdint.patch
+    echo " #include <cstring>" >> cstdint.patch
+    echo " #include <utility>" >> cstdint.patch
+    echo " #include <iostream>" >> cstdint.patch
+    echo "+#include <cstdint>" >> cstdint.patch
+    echo " #include <tuple>" >> cstdint.patch
+    echo " #include <functional>" >> cstdint.patch
+    echo " " >> cstdint.patch
+    git apply cstdint.patch
+    rm cstdint.patch
     mkdir _build && cd _build
     $CMAKE -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release \
         -DPISTACHE_BUILD_EXAMPLES=false \
