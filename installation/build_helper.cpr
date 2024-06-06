@@ -50,7 +50,7 @@ install_cpr_from_git() {
 
     git clone $GIT_URL
     cd cpr
-    git checkout tags/1.10.0
+    git checkout tags/1.10.5
     mkdir build && cd build
     cmake .. -DCPR_USE_SYSTEM_CURL=ON -DCPR_BUILD_TESTS=OFF
     cmake --build . --parallel
