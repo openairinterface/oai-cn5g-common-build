@@ -61,6 +61,10 @@ install_mongocxx_from_git() {
     echo "Install build tools for mongocxx"
     $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
     ret=$?;[[ $ret -ne 0 ]] && return $ret
+    # cmake is looking for python as python3
+    if [[ "$(get_distribution_release)" = "ubuntu24.04" ]]; then
+      update-alternatives --install /usr/bin/python python /usr/bin/python3 20
+    fi
 
     GIT_URL=https://github.com/mongodb/mongo-cxx-driver.git
     echo "Install mongocxx from $GIT_URL"
