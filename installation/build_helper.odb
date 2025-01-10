@@ -68,7 +68,7 @@ install_odb() {
       bpkg build libodb-mysql --yes
       echo "Install odb runtime libraries"
       sleep 4
-      bpkg install --all --recursive
+      $SUDO bpkg install --all --recursive
 
   fi
   echo "odb installation complete"
