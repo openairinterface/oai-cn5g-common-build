@@ -51,7 +51,7 @@ install_lttng_from_git() {
       $SUDO rm -rf userspace-rcu
     fi
     git clone $GIT_URL
-    cd userspace-rcu && git checkout v0.13.1
+    cd userspace-rcu && git checkout v0.15.0
     ret=$?;[[ $ret -ne 0 ]] && popd && return $ret
 
     ./bootstrap
@@ -78,7 +78,7 @@ install_lttng_from_git() {
       $SUDO rm -rf lttng-ust
     fi
     git clone $GIT_URL
-    cd lttng-ust && git checkout v2.13.3
+    cd lttng-ust && git checkout v2.13.8
     ret=$?;[[ $ret -ne 0 ]] && popd && return $ret
 
     ./bootstrap
@@ -105,7 +105,7 @@ install_lttng_from_git() {
       $SUDO rm -rf lttng-tools
     fi
     git clone $GIT_URL
-    cd lttng-tools && git checkout v2.13.7
+    cd lttng-tools && git checkout v2.13.14
     ret=$?;[[ $ret -ne 0 ]] && popd && return $ret
 
     ./bootstrap
