@@ -78,7 +78,7 @@ install_lttng_from_git() {
       $SUDO rm -rf lttng-ust
     fi
     git clone $GIT_URL
-    cd lttng-ust && git checkout v2.13.8
+    cd lttng-ust && git checkout v2.13.12
     ret=$?;[[ $ret -ne 0 ]] && popd && return $ret
 
     ./bootstrap
