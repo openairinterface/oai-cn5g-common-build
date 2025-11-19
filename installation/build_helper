@@ -134,6 +134,8 @@ check_supported_distribution() {
         "rhel9.4")     return 0 ;;
         "rhel9.5")     return 0 ;;
         "rhel9.6")     return 0 ;;
+        "rhel9.7")     return 0 ;;
+        "rhel9.8")     return 0 ;;
         "rocky9.3")    return 0 ;;
         "rocky9.4")    return 0 ;;
         "rocky9.5")    return 0 ;;
