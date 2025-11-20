@@ -47,6 +47,7 @@ install_odb() {
       sleep 4
       sh build2-install-0.17.0.sh --yes --no-bdep --no-modules --trust yes
       echo "build2 installation complete"
+      export PATH=/usr/local/build2/bin:/usr/local/bin:$PATH
       sleep 4
       which bpkg
       sleep 4
