@@ -1,8 +1,12 @@
 # SPDX-License-Identifier: LicenseRef-CSSL-1.0
 
-#-------------------------------------------------------------------------------
-#arg1 is force (0 or 1) (no interactive script)
-#arg2 is debug (0 or 1) (install debug libraries)
+# -------------------------------------------------------------------------------
+# Build and install a pinned nghttp2 version from source with ASIO support.
+# -------------------------------------------------------------------------------
+
+# arg1 is force (0 or 1) (no interactive script)
+# arg2 is debug (0 or 1) (install debug libraries)
+
 install_nghttp2_from_git() {
   echo "Starting to install nghttp2"
   if [ $1 -eq 0 ]; then
@@ -12,12 +16,12 @@ install_nghttp2_from_git() {
     prompt='y'
     OPTION="-y"
   fi
+
   if [ $2 -eq 0 ]; then
     debug=0
   else
     debug=1
   fi
-
 
   if [[ $prompt =~ [yY](es)* ]]
   then
@@ -35,7 +39,7 @@ install_nghttp2_from_git() {
       libcunit1-dev \
       libssl-dev \
       libxml2-dev libev-dev libevent-dev libjansson-dev libc-ares-dev \
-      libjemalloc-dev libsystemd-dev python3-dev python-setuptools"
+      libjemalloc-dev libsystemd-dev python3-dev python3-setuptools"
     elif [[ "$OS_BASEDISTRO" == "fedora" ]]; then
       PACKAGE_LIST="\
       gcc-c++ \
@@ -54,42 +58,43 @@ install_nghttp2_from_git() {
     else
       echo_fatal "$OS_DISTRO is not a supported distribution."
     fi
+
     echo "Install build tools"
-    $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
+    $SUDO "$INSTALLER" install $OPTION $PACKAGE_LIST
     ret=$?;[[ $ret -ne 0 ]] && return $ret
 
     GIT_URL=https://github.com/nghttp2/nghttp2.git
-    echo "Install nghttp2 from $GIT_URL"
-    pushd /tmp
-    echo "Downloading nghttp2"
-    if [[ $OPTION =~ [yY](es)* ]]
-    then
-      $SUDO rm -rf nghttp2
-    fi
-
-    git clone $GIT_URL
-    cd nghttp2
     # This is the last commit before nghttp2_asio was no longer maintained
-    git checkout 00a33281bec5a6a53fba80df4036d8037957df64
-    git submodule update --init
-    ret=$?;[[ $ret -ne 0 ]] && popd && return $ret
-    autoreconf -i
-    ret=$?;[[ $ret -ne 0 ]] && popd && return $ret
-    automake
-    ret=$?;[[ $ret -ne 0 ]] && popd && return $ret
-    autoconf
-    ret=$?;[[ $ret -ne 0 ]] && popd && return $ret
-    ./configure --enable-asio-lib --enable-lib-only
-    ret=$?;[[ $ret -ne 0 ]] && popd && return $ret
-    make -j $(nproc)
-    ret=$?;[[ $ret -ne 0 ]] && popd && return $ret
-    $SUDO make install
-    ret=$?;[[ $ret -ne 0 ]] && popd && return $ret
-    $SUDO ldconfig
-    ret=$?;[[ $ret -ne 0 ]] && popd && return $ret
-    git clean -x -d -ff .
-    popd
+    NGHTTP2_COMMIT=00a33281bec5a6a53fba80df4036d8037957df64
+    echo "Install nghttp2 from $GIT_URL"
+
+    # Use a subshell to keep directory changes local and stop on command failures.
+    (
+      set -e
+      cd /tmp
+      echo "Downloading nghttp2 $NGHTTP2_COMMIT"
+      $SUDO rm -rf nghttp2
+
+      # fetch only the pinned commit rather than the whole history
+      git init -q nghttp2
+      cd nghttp2
+      git remote add origin "$GIT_URL"
+      git fetch -q --depth 1 origin "$NGHTTP2_COMMIT"
+      git checkout -q FETCH_HEAD
+
+      # autoreconf -i invokes the required Autotools components
+      autoreconf -i
+      ./configure --enable-asio-lib --enable-lib-only
+      make -j "$(nproc)"
+      $SUDO make install
+      $SUDO ldconfig
+    )
+    ret=$?
+    [[ -d /tmp/nghttp2 ]] && git -C /tmp/nghttp2 clean -x -d -ff .
+    [[ $ret -ne 0 ]] && return $ret
+    echo "nghttp2 installation complete"
+  else
+    echo "nghttp2 installation skipped"
   fi
-  echo "nghttp2 installation complete"
   return 0
 }
