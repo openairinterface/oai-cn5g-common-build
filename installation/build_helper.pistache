@@ -33,6 +33,8 @@ install_pistache_from_git() {
     git clone $GIT_URL
     cd pistache && git checkout e18ed9baeb2145af6f9ea41246cf48054ffd9907
     ret=$?;[[ $ret -ne 0 ]] && popd && return $ret
+    sed -i '/#include <climits>/a #include <cstdint>' include/pistache/flags.h
+    sed -i '/#include <iostream>/a #include <cstdint>' include/pistache/optional.h
     mkdir _build && cd _build
     $CMAKE -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release \
         -DPISTACHE_BUILD_EXAMPLES=false \
