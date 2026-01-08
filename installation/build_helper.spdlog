@@ -31,7 +31,7 @@ install_spdlog_from_git() {
     fi
 
     git clone $GIT_URL
-    cd spdlog && git checkout v1.11.0
+    cd spdlog && git checkout v1.17.0
     mkdir _build && cd _build
     $CMAKE -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DSPDLOG_FMT_EXTERNAL=ON -DSPDLOG_BUILD_SHARED=ON ..
     make
