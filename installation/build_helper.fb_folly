@@ -106,6 +106,7 @@ install_fb_folly_from_source(){
 
     sed -i -e "s@#include <algorithm>@#include <algorithm>\n#include <limits>@" folly/TimeoutQueue.cpp
     sed -i -e "s@folly::constexpr_max@@" -e "s@SIGSTKSZ, @@" ./folly/fibers/FiberManager.cpp
+    sed -i -e "s@#include <folly/synchronization/SanitizeThread.h>@#include <folly/synchronization/SanitizeThread.h>\n#include <system_error>@" folly/detail/AtFork.cpp
 
     mkdir _build && cd _build
     if [[ "$OS_BASEDISTRO" == "fedora" ]]; then
