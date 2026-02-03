@@ -294,6 +294,7 @@ update_package_db() {
 check_enable_epel_repos() {
   # on Enterprise Linuxes, ensure EPEL repos are installed
   # (provides: libidn2-devel, vconfig, iperf, phpMyAdmin, dkms, ...)
+  EPEL_URL=${EPEL_URL:-"https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm"}
   if [[ "$OS_DISTRO" == "rhel" ]] || [[ "$OS_DISTRO" == "centos" ]]; then
     if rpm -q epel-release > /dev/null; then
       echo "EPEL repos already present. Good."
@@ -303,7 +304,7 @@ check_enable_epel_repos() {
       while [[ $idx -lt 4 ]]; do
         wget --tries=4 --retry-connrefused --wait=8 \
           --user-agent="Mozilla" \
-          https://oai.eurecom.io/ci-package-mirrors/epel/epel-release-latest-9.noarch.rpm
+          "$EPEL_URL"
         # Use RPM package from OAI EURECOM
         if [[ $? -eq 0 ]] && file epel-release-latest-9.noarch.rpm | grep -q "RPM"; then
           # Verify if it is a valid RPM
