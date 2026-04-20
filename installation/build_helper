@@ -188,16 +188,35 @@ function list_include_item {
 compilations() {
   echo_info "Compilation log for $3 is here: $dlog/$2.txt"
   cd $OPENAIRCN_DIR/build/$1/build
+  local parallel_flag=""
+  local parallel_jobs=""
+  local verbose_flag=""
+  # Map $make_args flags to cmake --build equivalents so compilations() works
+  # with any generator (Make or Ninja) that was passed to cmake configure.
+  #   -jN / -j N in make_args  →  --parallel N
+  #   -j without N             →  --parallel $(nproc)
+  #   VERBOSE=1  in make_args  →  --verbose
+  if [[ "$make_args" =~ -j[[:space:]]*([0-9]+) ]]; then
+    parallel_jobs="${BASH_REMATCH[1]}"
+  elif echo "$make_args" | grep -q -- '\-j'; then
+    parallel_jobs="$(nproc)"
+  fi
+  if [[ -n "$parallel_jobs" ]]; then
+    parallel_flag="--parallel ${parallel_jobs}"
+  fi
+  if echo "$make_args" | grep -q 'VERBOSE=1'; then
+    verbose_flag="--verbose"
+  fi
   if [ "a$4" == "a1" ]; then
     set -o pipefail
     {
       rm -f $3
-      make $make_args $2
+      cmake --build . --target $2 $parallel_flag $verbose_flag
     } |& tee $dlog/$2.txt
   else
     {
       rm -f $3
-      make $make_args $2
+      cmake --build . --target $2 $parallel_flag $verbose_flag
     } > $dlog/$2.txt 2>&1
   fi
   if [ $? == 0 -a -s $3 ] ; then
