@@ -32,7 +32,7 @@ install_lttng_from_git() {
       $SUDO rm -rf userspace-rcu
     fi
     git clone $GIT_URL
-    cd userspace-rcu && git checkout v0.15.0
+    cd userspace-rcu && git checkout v2.15.0
     ret=$?;[[ $ret -ne 0 ]] && popd && return $ret
 
     ./bootstrap
