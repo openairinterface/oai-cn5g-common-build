@@ -48,6 +48,9 @@ install_fb_folly_from_source(){
         liblz4-dev \
         liblzma-dev \
         libsnappy-dev \
+        libboost-all-dev \
+        libfmt-dev \
+        libzstd-dev \
         make \
         zlib1g-dev \
         binutils-dev \
@@ -100,13 +103,12 @@ install_fb_folly_from_source(){
       echo '   if (NOT Gflags_FIND_QUIETLY)' >> patch.diff
       echo '     message(STATUS "Found gflags from package config ${gflags_CONFIG}")' >> patch.diff
       git apply patch.diff
+      sed -i -e "s@#include <algorithm>@#include <algorithm>\n#include <limits>@" folly/TimeoutQueue.cpp
+      sed -i -e "s@folly::constexpr_max@@" -e "s@SIGSTKSZ, @@" ./folly/fibers/FiberManager.cpp
+      sed -i -e "s@#include <folly/synchronization/SanitizeThread.h>@#include <folly/synchronization/SanitizeThread.h>\n#include <system_error>@" folly/detail/AtFork.cpp
     else
-        git checkout -f v2019.11.11.00
+        git checkout -f v2026.01.19.00
     fi
-
-    sed -i -e "s@#include <algorithm>@#include <algorithm>\n#include <limits>@" folly/TimeoutQueue.cpp
-    sed -i -e "s@folly::constexpr_max@@" -e "s@SIGSTKSZ, @@" ./folly/fibers/FiberManager.cpp
-    sed -i -e "s@#include <folly/synchronization/SanitizeThread.h>@#include <folly/synchronization/SanitizeThread.h>\n#include <system_error>@" folly/detail/AtFork.cpp
 
     mkdir _build && cd _build
     if [[ "$OS_BASEDISTRO" == "fedora" ]]; then
