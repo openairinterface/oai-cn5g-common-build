@@ -15,7 +15,7 @@ install_odb() {
 
   if [[ $prompt =~ [yY](es)* ]]
   then
-    C_URL=https://download.build2.org/0.17.0/build2-install-0.17.0.sh
+    C_URL=https://download.build2.org/0.18.1/build2-install-0.18.1.sh
     echo "Install ODB runtime library from $C_URL"
     pushd /tmp
     if [[ $prompt =~ [yY](es)* ]]
@@ -26,7 +26,9 @@ install_odb() {
       curl -sSfO $C_URL
       echo "download done"
       sleep 4
-      sh build2-install-0.17.0.sh --yes --no-bdep --no-modules --trust yes
+      # sh build2-install-0.17.0.sh --yes --no-bdep --no-modules --trust yes
+      sh build2-install-0.18.1.sh --yes --no-bdep --no-modules --trust yes
+      export PATH="$HOME/.build2/bin:$PATH"
       echo "build2 installation complete"
       sleep 4
       which bpkg
@@ -43,7 +45,7 @@ install_odb() {
 
       cd libodb-gcc
       echo "Build odb runtime libraries"
-      bpkg add https://pkg.cppget.org/1/beta
+      bpkg add https://pkg.cppget.org/1/stable
       bpkg fetch --trust-yes
       bpkg build libodb --yes
       bpkg build libodb-mysql --yes
