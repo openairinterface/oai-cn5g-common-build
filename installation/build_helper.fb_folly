@@ -58,6 +58,22 @@ install_fb_folly_from_source(){
         libssl-dev \
         pkg-config
       ret=$?;[[ $ret -ne 0 ]] && return $ret
+
+      # folly (>= v2024.x) requires the header-only fast_float library. The
+      # version packaged by the supported distros is too old (Ubuntu 24.04
+      # ships 3.9.0, folly needs the 8.0.0 API), so install it from source to
+      # match the version folly pins in its fbcode_builder manifest.
+      $SUDO rm -rf /tmp/fast_float
+      git clone --depth 1 --branch v8.0.0 https://github.com/fastfloat/fast_float.git /tmp/fast_float
+      ret=$?;[[ $ret -ne 0 ]] && return $ret
+      pushd /tmp/fast_float
+      mkdir -p _build && cd _build
+      cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DFASTFLOAT_TEST=OFF ..
+      ret=$?;[[ $ret -ne 0 ]] && popd && return $ret
+      $SUDO make install
+      ret=$?;[[ $ret -ne 0 ]] && popd && return $ret
+      popd
+      $SUDO rm -rf /tmp/fast_float
     fi
 
     pushd /tmp
