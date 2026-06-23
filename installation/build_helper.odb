@@ -15,7 +15,11 @@ install_odb() {
 
   if [[ $prompt =~ [yY](es)* ]]
   then
-    C_URL=https://download.build2.org/0.17.0/build2-install-0.17.0.sh
+    # build2 toolchain version used to bootstrap and build the ODB runtime.
+    # Keep this current: old versions age out of the cppget.org source repos
+    # and their install script fails with "build2/X is not available in source".
+    BUILD2_VERSION=0.18.1
+    C_URL=https://download.build2.org/${BUILD2_VERSION}/build2-install-${BUILD2_VERSION}.sh
     echo "Install ODB runtime library from $C_URL"
     pushd /tmp
     if [[ $prompt =~ [yY](es)* ]]
@@ -23,14 +27,17 @@ install_odb() {
       $SUDO rm -rf build2
     fi
       mkdir build2 && cd build2
-      curl -sSfO $C_URL
+      curl -sSfO $C_URL || return 1
       echo "download done"
       sleep 4
-      sh build2-install-0.17.0.sh --yes --no-bdep --no-modules --trust yes
+      sh build2-install-${BUILD2_VERSION}.sh --yes --no-bdep --no-modules --trust yes || return 1
       echo "build2 installation complete"
       sleep 4
-      which bpkg
-      sleep 4
+      # build2/bpkg must be on PATH now, otherwise the toolchain install failed
+      if ! command -v bpkg >/dev/null 2>&1; then
+        echo_error "build2/bpkg installation failed: bpkg not found on PATH"
+        return 1
+      fi
       cd ..
 
       echo "Starting to install odb"
@@ -39,18 +46,26 @@ install_odb() {
       bpkg create -d libodb-gcc cc     \
         config.cxx=g++                 \
         config.cc.coptions=-O3         \
-        config.install.root=/usr/local
+        config.install.root=/usr/local || return 1
 
       cd libodb-gcc
       echo "Build odb runtime libraries"
-      bpkg add https://pkg.cppget.org/1/beta
-      bpkg fetch --trust-yes
-      bpkg build libodb --yes
-      bpkg build libodb-mysql --yes
+      # ODB 2.5.0 lives in the stable repository.
+      bpkg add https://pkg.cppget.org/1/stable || return 1
+      bpkg fetch --trust-yes || return 1
+      bpkg build libodb --yes || return 1
+      bpkg build libodb-mysql --yes || return 1
       echo "Install odb runtime libraries"
       sleep 4
-      $SUDO bpkg install --all --recursive
+      $SUDO bpkg install --all --recursive || return 1
 
+      $SUDO ldconfig
+
+      # Verify the headers actually landed where the compiler will look for them
+      if [ ! -f /usr/local/include/odb/core.hxx ]; then
+        echo_error "odb installation failed: /usr/local/include/odb/core.hxx not found"
+        return 1
+      fi
   fi
   echo "odb installation complete"
   return 0
