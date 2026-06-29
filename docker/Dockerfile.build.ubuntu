@@ -1,0 +1,137 @@
+#/*
+# * SPDX-License-Identifier: LicenseRef-CSSL-1.0
+# */
+
+#---------------------------------------------------------------------
+# Generic build + target Dockerfile for OAI CN5G Network Functions.
+# Requires a pre-built base image (Dockerfile.base.ubuntu).
+#
+# Build example:
+#   docker buildx build \
+#     --build-arg NF=ausf \
+#     --build-arg BASE_IMAGE=oai-cn5g-base:develop \
+#     --build-arg GIT_COMMIT=$(git rev-parse --short HEAD) \
+#     --tag oai-ausf:ci-tmp-pr-402-defg3214 \
+#     -f build/common-build/docker/Dockerfile.build.ubuntu .
+#
+# With LTTng:
+#   add --build-arg ENABLE_LTTNG=true
+#
+# Builder stage only:
+#   add --target oai-builder
+#---------------------------------------------------------------------
+
+ARG BASE_IMAGE=oai-cn5g-base:develop
+# Fallback to oai-cn5g-base:develop if user does not provide base image
+
+#---------------------------------------------------------------------
+# BUILDER STAGE
+#---------------------------------------------------------------------
+FROM $BASE_IMAGE AS oai-builder
+
+ARG NF
+ARG ENABLE_LTTNG=false
+ARG BPF_DEBUG=false
+ARG BUILD_ARGS=""
+RUN : "${NF:?NF build argument is required (e.g. --build-arg NF=amf)}"
+
+# Copy build scripts and cmake modules
+WORKDIR /openair-${NF}
+COPY ./build/scripts /openair-${NF}/build/scripts
+COPY ./build/common-build /openair-${NF}/build/common-build
+COPY ./build/${NF}/CMakeLists.txt /openair-${NF}/build/${NF}/CMakeLists.txt
+
+# cmake_modules location varies by NF (PCF: build/cmake_modules/, UPF: cmake_modules/).
+# Copy to both paths so install-deps succeeds regardless of which the NF's build script expects.
+RUN --mount=type=bind,source=build,target=/build-ctx \
+    if [ -d /build-ctx/cmake_modules ]; then \
+        cp -r /build-ctx/cmake_modules /openair-${NF}/build/cmake_modules; \
+        cp -r /build-ctx/cmake_modules /openair-${NF}/cmake_modules; \
+    fi
+
+# Install NF build dependencies
+WORKDIR /openair-${NF}/build/scripts
+RUN ./build_${NF} --install-deps --force && \
+    ldconfig
+
+# Copy source code and build
+COPY . /openair-${NF}
+RUN if [ "$BPF_DEBUG" = "true" ]; then BUILD_ARGS="${BUILD_ARGS} --bpf-debug"; fi && \
+    if [ "$ENABLE_LTTNG" = "true" ]; then \
+        apt-get update && \
+        DEBIAN_FRONTEND=noninteractive apt-get install --yes \
+          lttng-modules-dkms \
+          lttng-tools \
+          libstdc++-??-dev && \
+        rm -rf /var/lib/apt/lists/* && \
+        ldconfig && \
+        ./build_${NF} --clean --Verbose --build-type Release --jobs --lttng ${BUILD_ARGS}; \
+    else \
+        ldconfig && \
+        ./build_${NF} --clean --Verbose --build-type Release --jobs ${BUILD_ARGS}; \
+    fi && \
+# Verify all shared-library dependencies are resolvable before staging
+    ldd /openair-${NF}/build/${NF}/build/${NF}
+
+# Normalize build output so the target stage needs no NF-specific logic:
+#   - binary renamed from ${NF} to oai_${NF}
+#   - pass-through entrypoint.sh synthesised for NFs that do not ship one
+#   - UPF: eBPF kernel object, bpftool, and their runtime libs staged into /usr/local/lib/
+RUN mkdir -p /openair-${NF}/bin && \
+    mv /openair-${NF}/build/${NF}/build/${NF} /openair-${NF}/bin/oai_${NF} && \
+    cp /openair-${NF}/scripts/healthcheck.sh /openair-${NF}/bin/ && \
+    if [ -f /openair-${NF}/scripts/entrypoint.sh ]; then \
+        cp /openair-${NF}/scripts/entrypoint.sh /openair-${NF}/bin/; \
+    else \
+        printf '#!/bin/sh\nexec "$@"\n' > /openair-${NF}/bin/entrypoint.sh && \
+        chmod +x /openair-${NF}/bin/entrypoint.sh; \
+    fi && \
+    if [ "$NF" = "upf" ]; then \
+        cp /usr/local/sbin/bpftool /openair-${NF}/bin/ && \
+        cp /openair-${NF}/build/${NF}/build/upf_app/kernel/CMakeFiles/qer_tc.dir/tc/qer_tc_kern.c.o \
+           /openair-${NF}/bin/ && \
+        cp /usr/lib/*-linux-gnu/libbfd-2.??-system.so /usr/local/lib/ && \
+        cp /usr/lib/*-linux-gnu/libopcodes-2.??-system.so /usr/local/lib/ && \
+        cp /openair-${NF}/build/ext/libbpf/src/libbpf.so.1 /usr/local/lib/ && \
+        ldconfig; \
+    fi
+
+#---------------------------------------------------------------------
+# TARGET STAGE
+#---------------------------------------------------------------------
+FROM $BASE_IMAGE AS oai-nf-target
+
+ARG NF
+ENV NF=${NF}
+
+# Copy all NF binaries and scripts staged by the builder normalization step
+WORKDIR /openair-${NF}/bin
+COPY --from=oai-builder /openair-${NF}/bin/ ./
+
+# Copy all locally-built shared libraries
+WORKDIR /usr/local/lib/
+COPY --from=oai-builder /usr/local/lib/ ./
+
+RUN ldconfig && \
+    ldd /openair-${NF}/bin/oai_${NF} && \
+    if [ -f /openair-${NF}/bin/bpftool ]; then ldd /openair-${NF}/bin/bpftool; fi
+
+# Copy NF configuration templates (some NFs ship multiple files, e.g. amf.conf + config.yaml)
+WORKDIR /openair-${NF}/etc
+COPY --from=oai-builder /openair-${NF}/etc/ ./
+
+WORKDIR /openair-${NF}
+
+ARG GIT_COMMIT
+LABEL org.opencontainers.image.authors="OpenAirInterface <oaicicdteam@openairinterface.org>" \
+      org.opencontainers.image.vendor="OpenAirInterface Software Alliance" \
+      org.opencontainers.image.licenses="Collaborative Standards Software License v1.0" \
+      org.opencontainers.image.title="oai-${NF}" \
+      org.opencontainers.image.revision="commit:${GIT_COMMIT}"
+
+HEALTHCHECK --interval=10s \
+            --timeout=15s \
+            --retries=6 \
+    CMD /openair-${NF}/bin/healthcheck.sh
+
+CMD ["/bin/sh", "-c", "exec /openair-${NF}/bin/entrypoint.sh /openair-${NF}/bin/oai_${NF} -c /openair-${NF}/etc/config.yaml -o"]
