@@ -1,0 +1,101 @@
+#/*
+# * SPDX-License-Identifier: LicenseRef-CSSL-1.0
+# */
+
+#---------------------------------------------------------------------
+#
+# Common base Dockerfile for the OAI CN5G
+#   Valid for Ubuntu-24.04 (noble)
+#
+# Build and reuse across all Network Functions:
+# Example:
+#   docker buildx build --no-cache -f build/common-build/docker/Dockerfile.base.ubuntu \
+#                --build-arg GIT_COMMIT=$(git -C build/common-build rev-parse --short HEAD) \
+#                -t oai-cn5g-base:develop .
+#
+#---------------------------------------------------------------------
+
+#---------------------------------------------------------------------
+# BASE IMAGE
+#---------------------------------------------------------------------
+ARG BASE_IMAGE=ubuntu:noble
+FROM $BASE_IMAGE AS oai-base
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Europe/Paris
+ENV IS_DOCKERFILE=1
+
+RUN apt-get update && \
+    apt-get upgrade --yes && \
+    apt-get install --yes \
+# Common tools and utilities
+      tzdata \
+      psmisc \
+      git \
+      net-tools \
+      tcpdump \
+      iputils-ping \
+      iproute2 \
+      ethtool \
+      arping \
+      bc \
+      wget \
+      sudo \
+      iptables \
+      python3 \
+      python3-jinja2 \
+# Common runtime libraries
+      netbase \
+      openssl \
+      libssh-4 \
+      libbrotli1 \
+      libsctp1 \
+      libcurl?-gnutls \
+      libcurl4-gnutls-dev \
+      librtmp1 \
+      libpsl5* \
+      libnettle* \
+      libhogweed* \
+      libldap-2.* \
+      libkrb5-3 \
+      libgssapi-krb5-2 \
+      libboost-filesystem1.??.0* \
+      libboost-thread1.??.0* \
+      libboost-chrono1.??.0* \
+      gcc-??-plugin-dev \
+      libmysqlclient2? \
+      libsqlite3-0 \
+      libnl-3-200 \
+      libnl-route-3-200 \
+      libllvm?? \
+      libgoogle-glog0* \
+      libdouble-conversion3 \
+      libnghttp2-14 \
+      liblapacke \
+      libopenblas0 \
+      libconfig++?v? \
+      liblttng-ust-dev \
+  && rm -rf /var/lib/apt/lists/*
+
+# Configure git system settings
+RUN git config --system https.postBuffer 199757920 && \
+    git config --system http.sslverify false
+
+# Install yq - YAML processor
+ARG TARGETPLATFORM
+ARG VERSION=v4.47.1
+RUN echo "Target platform is: ${TARGETPLATFORM}" && \
+    case "${TARGETPLATFORM}" in \
+      "linux/amd64") BINARY="yq_linux_amd64"; ;; \
+      "linux/arm64") BINARY="yq_linux_arm64"; ;; \
+      *) echo "Unsupported platform"; exit 1; ;; \
+    esac && \
+    wget https://github.com/mikefarah/yq/releases/download/${VERSION}/${BINARY} -O /usr/bin/yq && \
+    chmod +x /usr/bin/yq
+
+# Image metadata
+ARG GIT_COMMIT
+LABEL org.opencontainers.image.authors="OpenAirInterface <oaicicdteam@openairinterface.org>" \
+      org.opencontainers.image.vendor="OpenAirInterface Software Alliance" \
+      org.opencontainers.image.licenses="Collaborative Standards Software License v1.0" \
+      org.opencontainers.image.revision="commit:${GIT_COMMIT}"

@@ -27,7 +27,7 @@ install_cpp_jwt_from_git() {
     fi
 
     git clone $GIT_URL
-    cd cpp-jwt && git checkout -f v1.4
+    cd cpp-jwt && git checkout -f v1.5.1
     ret=$?;[[ $ret -ne 0 ]] && popd && return $ret
     mkdir _build && cd _build
     $CMAKE \

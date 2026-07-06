@@ -56,7 +56,7 @@ install_mongocxx_from_git() {
     if [[ "$(get_distribution_release)" = *"rhel8"* ]] || [[ "$(get_distribution_release)" = *"rocky8"* ]]; then
       cd mongo-cxx-driver && git checkout r3.8.0
     else
-      cd mongo-cxx-driver && git checkout r3.9.0
+      cd mongo-cxx-driver && git checkout r4.2.0
     fi
     ret=$?;[[ $ret -ne 0 ]] && popd && return $ret
 
