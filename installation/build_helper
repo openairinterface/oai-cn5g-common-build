@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: LicenseRef-CSSL-1.0
 
-SUPPORTED_DISTRO="Ubuntu 20.04,22.04,24.04 RHEL 9.x, UBI 9.x, Rocky-Linux 9.x"
+SUPPORTED_DISTRO="Ubuntu 24.04 RHEL 9.x, UBI 9.x, Rocky-Linux 9.x"
 if [ ! -f /etc/os-release ]; then
   echo_fatal "No /etc/os-release file found. You're likely on an unsupported distro."
 fi
@@ -104,8 +104,6 @@ get_distribution_release() {
 check_supported_distribution() {
     local distribution=$(get_distribution_release)
     case "$distribution" in
-        "ubuntu20.04") return 0 ;;
-        "ubuntu22.04") return 0 ;;
         "ubuntu24.04") return 0 ;;
         "rhel9.3")     return 0 ;;
         "rhel9.4")     return 0 ;;
@@ -117,6 +115,8 @@ check_supported_distribution() {
         "rocky9.4")    return 0 ;;
         "rocky9.5")    return 0 ;;
         "rocky9.6")    return 0 ;;
+        "rocky9.7")    return 0 ;;
+        "rocky9.8")    return 0 ;;
     esac
     return 1
 }
