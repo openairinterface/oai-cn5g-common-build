@@ -7,13 +7,13 @@
 
 OPENAIR-CN-5G is an implementation of the 3GPP specifications for the 5G Core Network.
 
-It contains multiple network elements that are each implemented in its own GIT repository.
+It contains multiple network elements that are each implemented in its own Git repository.
 
 This repository is meant for installation and build scripts that are shared by all the network functions.
 
 It may also contain scripts to enable automation in order to push new commits on this shared build sub-module to all its parent repositories.
 
-# Licence info
+## Licence info
 
 The source code is distributed under `Collaborative Standards Software License v1.0 (CSSL v1.0)`.
 For more details, visit the [OAI Website](https://openairinterface.org/oai-cssl/).
@@ -23,18 +23,16 @@ file at the root of this repository.
 
 Certain files in the repository are using MIT License and documentation is distributed under Creative Commons Attribution 4.0 International license.
 
-# Collaborative work
+## Collaborative Development
 
-This source code is managed through a GITLAB server, a collaborative development platform:
+This source code is hosted and maintained on GitHub, enabling collaborative development and contribution:
 
-*  URL: [https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-common-build](https://gitlab.eurecom.fr/oai/cn5g/oai-cn5g-common-build).
+*  URL: [https://github.com/openairinterface/oai-cn5g-common-build](https://github.com/openairinterface/oai-cn5g-common-build).
 
-Process is explained in [CONTRIBUTING](CONTRIBUTING.md) file.
+Contribution guidelines and development workflows are described in the [CONTRIBUTING](CONTRIBUTING.md) file.
 
-# Contribution requests
+## Contribution Requests
 
-In a general way, anybody who is willing can contribute on any part of the
-code in any network component.
+Anyone is welcome to contribute to any part of the codebase and any network component.
 
-Contributions can be simple bugfixes, advices and remarks on the design,
-architecture, coding/implementation.
+Contributions can include bug fixes, suggestions, design and architecture improvements, as well as feedback on coding and implementation.
