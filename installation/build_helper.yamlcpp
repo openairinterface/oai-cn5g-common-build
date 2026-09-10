@@ -1,8 +1,12 @@
 # SPDX-License-Identifier: LicenseRef-CSSL-1.0
 
-#-------------------------------------------------------------------------------
-#arg1 is force (0 or 1) (no interactive script)
-#arg2 is debug (0 or 1) (install debug libraries)
+# -------------------------------------------------------------------------------
+# Build and install a pinned yaml-cpp version from source as a shared library.
+# -------------------------------------------------------------------------------
+
+# arg1 is force (0 or 1) (no interactive script)
+# arg2 is debug (0 or 1) (install debug libraries)
+
 install_libyaml_cpp_from_git() {
   echo "Starting to install libyaml_cpp"
   if [ $1 -eq 0 ]; then
@@ -12,37 +16,41 @@ install_libyaml_cpp_from_git() {
     prompt='y'
     OPTION="-y"
   fi
+
   if [ $2 -eq 0 ]; then
     debug=0
   else
     debug=1
   fi
 
-
   if [[ $prompt =~ [yY](es)* ]]
   then
     GIT_URL=https://github.com/jbeder/yaml-cpp.git
+    YAML_CPP_VERSION=0.8.0
     echo "Install yaml-cpp from $GIT_URL"
-    pushd $OPENAIRCN_DIR/build/ext
-    echo "Downloading yaml-cpp"
-    if [[ $OPTION =~ -[yY](es)* ]]
-    then
-      $SUDO rm -rf yaml-cpp
-    fi
 
-    git clone $GIT_URL
-    cd yaml-cpp && git checkout 0.8.0
-    ret=$?;[[ $ret -ne 0 ]] && popd && return $ret
-    mkdir _build && cd _build
-    $CMAKE -G "Unix Makefiles" -DYAML_BUILD_SHARED_LIBS=on -DYAML_CPP_BUILD_TESTS=off ..
-    ret=$?;[[ $ret -ne 0 ]] && popd && return $ret
-    make
-    ret=$?;[[ $ret -ne 0 ]] && popd && return $ret
-    $SUDO make install
-    ret=$?;[[ $ret -ne 0 ]] && popd && return $ret
-    popd
-    rm -Rf $OPENAIRCN_DIR/build/ext/yaml-cpp/_build
+    # Use a subshell to keep directory changes local and stop on command failures.
+    (
+      set -e
+      cd "$OPENAIRCN_DIR/build/ext"
+      echo "Downloading yaml-cpp $YAML_CPP_VERSION"
+      $SUDO rm -rf yaml-cpp
+
+      # fetch only the pinned tag rather than the whole history
+      git clone --depth 1 --branch "$YAML_CPP_VERSION" "$GIT_URL"
+      cd yaml-cpp
+      mkdir _build && cd _build
+      "$CMAKE" -G "Unix Makefiles" -DYAML_BUILD_SHARED_LIBS=on -DYAML_CPP_BUILD_TESTS=off ..
+      make -j "$(nproc)"
+      $SUDO make install
+    )
+    ret=$?
+    rm -Rf "$OPENAIRCN_DIR/build/ext/yaml-cpp/_build"
+    [[ $ret -ne 0 ]] && return $ret
+    echo "yaml-cpp installation complete"
+  else
+    echo "yaml-cpp installation skipped"
   fi
-  echo "yaml-cpp installation complete"
+
   return 0
 }
