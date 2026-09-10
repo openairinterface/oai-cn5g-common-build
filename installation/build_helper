@@ -37,7 +37,7 @@ echo_info()    { cecho "$*" $blue         ;}
 # the per-dependency helpers rely on: INSTALLER, OS_BASEDISTRO, CMAKE and SUDO.
 # -------------------------------------------------------------------------------
 
-SUPPORTED_DISTRO="Ubuntu 24.04, RHEL 9.x, UBI 9.x, Rocky-Linux 9.x"
+SUPPORTED_DISTRO="Ubuntu 24.04, CentOS Stream 10"
 if [ ! -f /etc/os-release ]; then
   echo_fatal "No /etc/os-release file found. You're likely on an unsupported distro."
 fi
@@ -45,7 +45,7 @@ OS_DISTRO=$(grep "^ID=" /etc/os-release | sed "s/ID=//" | sed "s/\"//g")
 OS_RELEASE=$(grep "^VERSION_ID=" /etc/os-release | sed "s/VERSION_ID=//" | sed "s/\"//g")
 CMAKE="cmake"
 case "$OS_DISTRO" in
-  fedora|rocky|rhel) OS_BASEDISTRO="fedora"; INSTALLER="dnf" ;;
+  centos) OS_BASEDISTRO="fedora"; INSTALLER="dnf" ;;
   debian|ubuntu)     OS_BASEDISTRO="debian"; INSTALLER="apt-get" ;;
 esac
 
@@ -69,7 +69,7 @@ get_distribution_release() {
 # returns 0 if the running distribution is one of $SUPPORTED_DISTRO
 check_supported_distribution() {
   case "$(get_distribution_release)" in
-    ubuntu24.04|rhel9.[3-8]|rocky9.[3-8]) return 0 ;;
+    ubuntu24.04|centos10) return 0 ;;
   esac
   return 1
 }
@@ -150,35 +150,17 @@ update_package_db() {
   touch $stamp
 }
 
-# on Enterprise Linuxes, ensure EPEL repos are installed
-# (provides: libidn2-devel, vconfig, iperf, phpMyAdmin, dkms, ...)
+# on CentOS Stream, ensure EPEL repos are installed
+# (provides: libidn2-devel, iperf, phpMyAdmin, dkms, ...)
 check_enable_epel_repos() {
-  local rpm=epel-release-latest-9.noarch.rpm
-  EPEL_URL=${EPEL_URL:-"https://dl.fedoraproject.org/pub/epel/$rpm"}
-
-  [[ "$OS_DISTRO" == "rhel" || "$OS_DISTRO" == "centos" ]] || return 0
+  [[ "$OS_DISTRO" == "centos" ]] || return 0
   if rpm -q epel-release > /dev/null; then
     echo "EPEL repos already present. Good."
     return 0
   fi
 
   echo "EPEL repos not present. Installing them."
-  local idx
-  for idx in 1 2 3 4; do
-    wget --tries=4 --retry-connrefused --wait=8 --user-agent="Mozilla" "$EPEL_URL" \
-      && file $rpm | grep -q "RPM" && break
-    # a download can yield an HTML error page instead of an RPM, retry in that case
-    echo "Attempt $idx failed: downloaded $(file -b $rpm 2>/dev/null)"
-    rm -f $rpm
-    sleep 1
-  done
-  if [ ! -f $rpm ]; then
-    echo "Error: Could not download the EPEL-9 RPM file"
-    exit 1
-  fi
-
-  $SUDO $INSTALLER install $OPTION $rpm
-  rm -f $rpm
+  $SUDO $INSTALLER install $OPTION epel-release
 }
 
 # -------------------------------------------------------------------------------
