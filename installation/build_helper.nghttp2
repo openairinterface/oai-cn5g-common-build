@@ -1,14 +1,18 @@
 # SPDX-License-Identifier: LicenseRef-CSSL-1.0
 
 # -------------------------------------------------------------------------------
-# Build and install a pinned nghttp2 version from source with ASIO support.
+# Build and install a pinned nghttp2 version from source
 # -------------------------------------------------------------------------------
 
-# arg1 is force (0 or 1) (no interactive script)
-# arg2 is debug (0 or 1) (install debug libraries)
-
+#-------------------------------------------------------------------------------
+#arg1 is force (0 or 1) (no interactive script)
+#arg2 is debug (0 or 1) (install debug libraries)
+#arg3 is the nghttp2 git reference (optional, default: last commit with nghttp2_asio)
 install_nghttp2_from_git() {
-  echo "Starting to install nghttp2"
+  # This is the last commit before nghttp2_asio was no longer maintained
+  local nghttp2_version=${3:-00a33281bec5a6a53fba80df4036d8037957df64}
+  echo "Starting to install nghttp2 $nghttp2_version"
+
   if [ $1 -eq 0 ]; then
     read -p "Do you want to install nghttp2 ? <y/N> " prompt
     OPTION=""
@@ -64,22 +68,20 @@ install_nghttp2_from_git() {
     ret=$?;[[ $ret -ne 0 ]] && return $ret
 
     GIT_URL=https://github.com/nghttp2/nghttp2.git
-    # This is the last commit before nghttp2_asio was no longer maintained
-    NGHTTP2_COMMIT=00a33281bec5a6a53fba80df4036d8037957df64
     echo "Install nghttp2 from $GIT_URL"
 
     # Use a subshell to keep directory changes local and stop on command failures.
     (
       set -e
       cd /tmp
-      echo "Downloading nghttp2 $NGHTTP2_COMMIT"
+      echo "Downloading nghttp2 $nghttp2_version"
       $SUDO rm -rf nghttp2
 
       # fetch only the pinned commit rather than the whole history
       git init -q nghttp2
       cd nghttp2
       git remote add origin "$GIT_URL"
-      git fetch -q --depth 1 origin "$NGHTTP2_COMMIT"
+      git fetch -q --depth 1 origin "$nghttp2_version"
       git checkout -q FETCH_HEAD
 
       # autoreconf -i invokes the required Autotools components
@@ -95,6 +97,7 @@ install_nghttp2_from_git() {
     echo "nghttp2 installation complete"
   else
     echo "nghttp2 installation skipped"
+
   fi
   return 0
 }
