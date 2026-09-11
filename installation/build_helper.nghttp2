@@ -65,7 +65,7 @@ install_nghttp2_from_git() {
 
     GIT_URL=https://github.com/nghttp2/nghttp2.git
     # This is the last commit before nghttp2_asio was no longer maintained
-    NGHTTP2_COMMIT=00a33281bec5a6a53fba80df4036d8037957df64
+    NGHTTP2_COMMIT=v1.68.1
     echo "Install nghttp2 from $GIT_URL"
 
     # Use a subshell to keep directory changes local and stop on command failures.
