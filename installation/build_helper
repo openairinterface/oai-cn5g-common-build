@@ -146,7 +146,12 @@ update_package_db() {
     return 0
   fi
 
-  $SUDO $INSTALLER update || return $?
+  # dnf update upgrades every installed package, dnf makecache only refreshes the metadata
+  if [[ "$INSTALLER" == "dnf" ]]; then
+    $SUDO dnf makecache || return $?
+  else
+    $SUDO $INSTALLER update || return $?
+  fi
   touch $stamp
 }
 
