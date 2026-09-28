@@ -66,7 +66,6 @@ SHELL ["/bin/bash", "-c"]
 
 # Libraries built from source and used by the NFs
 RUN source ./build_helper && set_openair_env && update_package_db && \
-    mkdir -p "$OPENAIRCN_DIR/build/ext" && \
     for lib in fmt spdlog nlohmann pistache nghttp2 cpr yamlcpp cpp_jwt; do source ./build_helper.$lib; done && \
     for lib in fmt spdlog nlohmann pistache nghttp2 cpr libyaml_cpp cpp_jwt; do install_${lib}_from_git 1 0 || exit $?; done && \
     ldconfig && \

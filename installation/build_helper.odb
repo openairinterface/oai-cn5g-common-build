@@ -27,7 +27,7 @@ install_odb() {
     # Use a subshell to keep directory changes local and stop on command failures.
     (
       set -e
-      cd /tmp
+      cd "$OPENAIRCN_DIR/build/ext"
       $SUDO rm -rf build2 odb-build
 
       echo "Downloading build2 $BUILD2_VERSION"

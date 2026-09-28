@@ -55,7 +55,7 @@ install_mongocxx_from_git() {
     # Use a subshell to keep directory changes local and stop on command failures.
     (
       set -e
-      cd /tmp
+      cd "$OPENAIRCN_DIR/build/ext"
       echo "Downloading mongocxx $MONGOCXX_VERSION"
       $SUDO rm -rf mongo-cxx-driver
 
@@ -70,7 +70,7 @@ install_mongocxx_from_git() {
       $SUDO "$CMAKE" --build . --target install
     )
     ret=$?
-    [[ -d /tmp/mongo-cxx-driver ]] && git -C /tmp/mongo-cxx-driver clean -x -d -ff
+    [[ -d "$OPENAIRCN_DIR/build/ext/mongo-cxx-driver" ]] && git -C "$OPENAIRCN_DIR/build/ext/mongo-cxx-driver" clean -x -d -ff
     [[ $ret -ne 0 ]] && return $ret
     echo "mongocxx installation complete"
   else

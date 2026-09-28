@@ -71,7 +71,7 @@ install_nghttp2_from_git() {
     # Use a subshell to keep directory changes local and stop on command failures.
     (
       set -e
-      cd /tmp
+      cd "$OPENAIRCN_DIR/build/ext"
       echo "Downloading nghttp2 $NGHTTP2_COMMIT"
       $SUDO rm -rf nghttp2
 
@@ -90,7 +90,7 @@ install_nghttp2_from_git() {
       $SUDO ldconfig
     )
     ret=$?
-    [[ -d /tmp/nghttp2 ]] && git -C /tmp/nghttp2 clean -x -d -ff .
+    [[ -d "$OPENAIRCN_DIR/build/ext/nghttp2" ]] && git -C "$OPENAIRCN_DIR/build/ext/nghttp2" clean -x -d -ff .
     [[ $ret -ne 0 ]] && return $ret
     echo "nghttp2 installation complete"
   else

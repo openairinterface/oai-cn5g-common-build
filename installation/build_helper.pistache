@@ -32,7 +32,7 @@ install_pistache_from_git() {
     # Use a subshell to keep directory changes local and stop on command failures.
     (
       set -e
-      cd /tmp
+      cd "$OPENAIRCN_DIR/build/ext"
       echo "Downloading Pistache $PISTACHE_VERSION"
       $SUDO rm -rf pistache
 
@@ -44,7 +44,7 @@ install_pistache_from_git() {
       $SUDO ninja -C _build install
     )
     ret=$?
-    rm -Rf /tmp/pistache/_build
+    rm -Rf "$OPENAIRCN_DIR/build/ext/pistache/_build"
     [[ $ret -ne 0 ]] && return $ret
     echo "pistache installation complete"
   else

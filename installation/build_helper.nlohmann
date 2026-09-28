@@ -32,7 +32,7 @@ install_nlohmann_from_git() {
     # Use a subshell to keep directory changes local and stop on command failures.
     (
       set -e
-      cd /tmp
+      cd "$OPENAIRCN_DIR/build/ext"
       echo "Downloading Nlohmann $NLOHMANN_VERSION"
       $SUDO rm -rf json
 
@@ -45,7 +45,7 @@ install_nlohmann_from_git() {
       $SUDO make install
     )
     ret=$?
-    rm -Rf /tmp/json/_build
+    rm -Rf "$OPENAIRCN_DIR/build/ext/json/_build"
     [[ $ret -ne 0 ]] && return $ret
     echo "Nlohmann Json installation complete"
   else

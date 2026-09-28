@@ -176,4 +176,6 @@ check_enable_epel_repos() {
 # root is three levels up
 set_openair_env() {
   export OPENAIRCN_DIR=$(realpath $(dirname $BASH_SOURCE)/../../..)
+  # build/ext holds third-party sources fetched and built by the install helpers
+  mkdir -p "$OPENAIRCN_DIR/build/ext"
 }
