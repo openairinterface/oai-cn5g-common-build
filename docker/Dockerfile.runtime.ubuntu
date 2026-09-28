@@ -1,0 +1,61 @@
+# SPDX-License-Identifier: LicenseRef-CSSL-1.0
+
+#---------------------------------------------------------------------
+#
+# Common runtime image for the OpenAirInterface Core Network functions
+#   Valid for Ubuntu 24.04 (noble)
+#
+# Holds the debug tools and runtime libraries every NF target image
+# needs, so an NF target stage only adds its own packages and binary.
+#
+# Build from the root of oai-cn5g-common-build:
+#   docker build -f docker/Dockerfile.runtime.ubuntu \
+#     --build-arg GIT_COMMIT=$(git rev-parse HEAD) -t oai-cn-runtime:ubuntu .
+#
+#---------------------------------------------------------------------
+
+ARG UBUNTU_IMAGE=ubuntu:noble
+FROM ${UBUNTU_IMAGE} AS oai-cn-runtime
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Europe/Paris
+
+RUN apt-get update && \
+    apt-get upgrade --yes && \
+    apt-get install --yes \
+# Debug tools
+      bc \
+      iputils-ping \
+      net-tools \
+      psmisc \
+      tcpdump \
+      tzdata \
+      wget \
+# Runtime libraries shared by the NFs
+      libboost-chrono1.83.0 \
+      libboost-thread1.83.0 \
+      libconfig++9v5 \
+      libcurl3t64-gnutls \
+      libmysqlclient21 \
+      netbase \
+      openssl \
+  && rm -rf /var/lib/apt/lists/*
+
+# yq reads config.yaml in the NF healthchecks
+ARG TARGETPLATFORM
+ARG VERSION=v4.47.1
+RUN echo "Target platform is: ${TARGETPLATFORM}" && \
+    case "${TARGETPLATFORM}" in \
+      "linux/amd64") BINARY="yq_linux_amd64"; ;; \
+      "linux/arm64") BINARY="yq_linux_arm64"; ;; \
+      *) echo "Unsupported platform"; exit 1; ;; \
+    esac && \
+    wget https://github.com/mikefarah/yq/releases/download/${VERSION}/${BINARY} -O /usr/bin/yq && \
+    chmod +x /usr/bin/yq
+
+# Image metadata
+ARG GIT_COMMIT
+LABEL org.opencontainers.image.authors="OpenAirInterface <oaicicdteam@openairinterface.org>" \
+      org.opencontainers.image.vendor="OpenAirInterface Software Alliance" \
+      org.opencontainers.image.licenses="Collaborative Standards Software License v1.0" \
+      org.opencontainers.image.revision="commit:${GIT_COMMIT}"
