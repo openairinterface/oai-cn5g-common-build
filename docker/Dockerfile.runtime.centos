@@ -1,0 +1,60 @@
+# SPDX-License-Identifier: LicenseRef-CSSL-1.0
+
+#---------------------------------------------------------------------
+#
+# Common runtime image for the OpenAirInterface Core Network functions
+#   Valid for CentOS Stream 10
+#
+# Holds the debug tools and runtime libraries every NF target image
+# needs, so an NF target stage only adds its own packages and binary.
+#
+# Build from the root of oai-cn5g-common-build:
+#   docker build -f docker/Dockerfile.runtime.centos \
+#     --build-arg GIT_COMMIT=$(git rev-parse HEAD) -t oai-cn-runtime:centos .
+#
+#---------------------------------------------------------------------
+
+ARG CENTOS_IMAGE=quay.io/centos/centos:stream10-minimal
+FROM ${CENTOS_IMAGE} AS oai-cn-runtime
+
+ENV TZ=Europe/Paris
+
+RUN microdnf update -y && \
+    microdnf install -y \
+# Debug tools
+      findutils \
+      iputils \
+      net-tools \
+      procps-ng \
+      psmisc \
+      tcpdump \
+      tzdata \
+      wget \
+# Runtime libraries shared by the NFs
+      boost \
+      libconfig \
+      libevent \
+      libicu \
+      mariadb-connector-c \
+      nettle \
+  && microdnf clean all -y && \
+    rm -rf /var/cache/yum /var/cache/dnf
+
+# yq reads config.yaml in the NF healthchecks
+ARG TARGETPLATFORM
+ARG VERSION=v4.47.1
+RUN echo "Target platform is: ${TARGETPLATFORM}" && \
+    case "${TARGETPLATFORM}" in \
+      "linux/amd64") BINARY="yq_linux_amd64"; ;; \
+      "linux/arm64") BINARY="yq_linux_arm64"; ;; \
+      *) echo "Unsupported platform"; exit 1; ;; \
+    esac && \
+    wget https://github.com/mikefarah/yq/releases/download/${VERSION}/${BINARY} -O /usr/bin/yq && \
+    chmod +x /usr/bin/yq
+
+# Image metadata
+ARG GIT_COMMIT
+LABEL org.opencontainers.image.authors="OpenAirInterface <oaicicdteam@openairinterface.org>" \
+      org.opencontainers.image.vendor="OpenAirInterface Software Alliance" \
+      org.opencontainers.image.licenses="Collaborative Standards Software License v1.0" \
+      org.opencontainers.image.revision="commit:${GIT_COMMIT}"

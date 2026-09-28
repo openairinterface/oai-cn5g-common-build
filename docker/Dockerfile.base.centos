@@ -1,0 +1,91 @@
+# SPDX-License-Identifier: LicenseRef-CSSL-1.0
+
+#---------------------------------------------------------------------
+#
+# Common base image for the OpenAirInterface Core Network functions
+#   Valid for CentOS Stream 10
+#
+# Build from the root of oai-cn5g-common-build:
+#   docker build --no-cache -f docker/Dockerfile.base.centos \
+#     --build-arg GIT_COMMIT=$(git rev-parse HEAD) -t oai-cn-base:centos .
+#
+#---------------------------------------------------------------------
+
+ARG CENTOS_IMAGE=quay.io/centos/centos:stream10
+FROM ${CENTOS_IMAGE} AS oai-cn-base
+
+ENV TZ=Europe/Paris
+ENV IS_DOCKERFILE=1
+
+# Distro packages: what the NF builds use from their check_install_<nf>_deps lists
+# CRB carries meson, ninja-build, lapack, openblas and libconfig; EPEL carries cryptopp and gtest
+# --allowerasing lets libcurl-devel replace the preinstalled libcurl-minimal
+RUN dnf config-manager --set-enabled crb && \
+    dnf install -y epel-release && \
+    dnf update -y && \
+    dnf install -y --allowerasing \
+# Build tools
+      autoconf \
+      automake \
+      cmake \
+      curl \
+      diffutils \
+      file \
+      gcc-c++ \
+      git \
+      libasan \
+      libtool \
+      make \
+      meson \
+      ninja-build \
+      pkgconf-pkg-config \
+      psmisc \
+      wget \
+# Libraries shared by all NFs
+      boost-devel \
+      libcurl-devel \
+      libevent-devel \
+      libxml2-devel \
+      nettle-devel \
+      openssl \
+      openssl-devel \
+# NF-specific libraries
+      cryptopp-devel \
+      gcc-plugin-devel \
+      gmp-devel \
+      gtest-devel \
+      lapack-devel \
+      libconfig-devel \
+      lksctp-tools-devel \
+      mariadb-connector-c-devel \
+      openblas-devel \
+  && dnf clean all && \
+# /usr/local is not on the default loader path on EL
+    echo "/usr/local/lib" > /etc/ld.so.conf.d/local-lib.conf && \
+    echo "/usr/local/lib64" >> /etc/ld.so.conf.d/local-lib.conf
+
+# Git configuration commands
+RUN git config --global https.postBuffer 123289600
+
+# Build helpers from this repository
+COPY ./installation /openair-cn/build/common-build/installation
+WORKDIR /openair-cn/build/common-build/installation
+SHELL ["/bin/bash", "-c"]
+
+# Libraries built from source and used by the NFs
+RUN source ./build_helper && set_openair_env && \
+    for lib in fmt spdlog nlohmann pistache nghttp2 cpr yamlcpp cpp_jwt; do source ./build_helper.$lib; done && \
+    for lib in fmt spdlog nlohmann pistache nghttp2 cpr libyaml_cpp cpp_jwt; do install_${lib}_from_git 1 0 || exit $?; done && \
+    ldconfig && \
+    dnf clean all && \
+    rm -rf /tmp/* "$OPENAIRCN_DIR/build/ext"
+
+SHELL ["/bin/sh", "-c"]
+WORKDIR /
+
+# Image metadata
+ARG GIT_COMMIT
+LABEL org.opencontainers.image.authors="OpenAirInterface <oaicicdteam@openairinterface.org>" \
+      org.opencontainers.image.vendor="OpenAirInterface Software Alliance" \
+      org.opencontainers.image.licenses="Collaborative Standards Software License v1.0" \
+      org.opencontainers.image.revision="commit:${GIT_COMMIT}"
