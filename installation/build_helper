@@ -172,4 +172,3 @@ check_enable_epel_repos() {
 set_openair_env() {
   export OPENAIRCN_DIR=$(realpath $(dirname $BASH_SOURCE)/../../..)
 }
-
